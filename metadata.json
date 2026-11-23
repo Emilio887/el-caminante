@@ -1,0 +1,6 @@
+{
+  "name": "El Caminante",
+  "description": "Navegación GPS, mapas sin conexión, grabación de rutas y senderismo con sensores BLE.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
