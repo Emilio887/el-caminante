@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -578,6 +579,162 @@ fun ProfileScreen(
                             viewModel.updateUserProfile(profile.copy(batterySaverBelow20Enabled = it))
                         },
                         modifier = Modifier.testTag("switch_battery_saver")
+                    )
+                }
+            }
+        }
+
+        // Section: Barometer Calibration
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Calibración del Sensor Barométrico",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "Introduce una altitud de referencia conocida (p. ej. cartel de puerto de montaña o cima) para corregir el error barométrico.",
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                var referenceAltitudeInput by remember { mutableStateOf("") }
+                var calibrationStatus by remember { mutableStateOf<String?>(null) }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = referenceAltitudeInput,
+                        onValueChange = { referenceAltitudeInput = it },
+                        label = { Text("Altitud real (metros)") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    Button(
+                        onClick = {
+                            val targetAlt = referenceAltitudeInput.toFloatOrNull()
+                            if (targetAlt != null) {
+                                viewModel.updateUserProfile(profile.copy(barometerOffsetMeters = targetAlt))
+                                calibrationStatus = "¡Calibrado a ${targetAlt.toInt()} m! Desnivel ajustado."
+                            } else {
+                                calibrationStatus = "Introduce un valor numérico válido."
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.height(56.dp)
+                    ) {
+                        Text("Calibrar")
+                    }
+                }
+
+                if (profile.barometerOffsetMeters != 0f) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Offset actual aplicado: %.0f m".format(profile.barometerOffsetMeters),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PineGreenPrimary
+                    )
+                }
+
+                calibrationStatus?.let { msg ->
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = msg, fontSize = 11.sp, color = TrailOrange)
+                }
+            }
+        }
+
+        // Section: External Platform Sync (Strava & Garmin Connect)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Sincronización con Strava y Garmin Connect",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "Sube tus rutas y entrenamientos automáticamente o bajo demanda a tus perfiles externos.",
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Strava API", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text(if (profile.stravaConnected) "Conectado y listo para sincronizar" else "Desconectado", fontSize = 11.sp, color = if (profile.stravaConnected) PineGreenPrimary else Color.Gray)
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.updateUserProfile(profile.copy(stravaConnected = !profile.stravaConnected))
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (profile.stravaConnected) Color.Gray else Color(0xFFFC4C02)
+                        )
+                    ) {
+                        Text(if (profile.stravaConnected) "Desconectar" else "Conectar Strava", fontSize = 12.sp, color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Garmin Connect API", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text(if (profile.garminConnected) "Conectado y listo para sincronizar" else "Desconectado", fontSize = 11.sp, color = if (profile.garminConnected) PineGreenPrimary else Color.Gray)
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.updateUserProfile(profile.copy(garminConnected = !profile.garminConnected))
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (profile.garminConnected) Color.Gray else Color(0xFF007ACC)
+                        )
+                    ) {
+                        Text(if (profile.garminConnected) "Desconectar" else "Conectar Garmin", fontSize = 12.sp, color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Sincronización automática post-ruta", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text("Sube la ruta a Strava/Garmin al finalizar el recorrido", fontSize = 11.sp, color = Color.Gray)
+                    }
+                    Switch(
+                        checked = profile.autoSyncExternalEnabled,
+                        onCheckedChange = {
+                            viewModel.updateUserProfile(profile.copy(autoSyncExternalEnabled = it))
+                        }
                     )
                 }
             }

@@ -14,5 +14,12 @@ data class UserProfile(
     val weeklyElevationGoalM: Float = 1000.0f,
     val isDarkModeEnabled: Boolean = false,
     val useDynamicColor: Boolean = true,
-    val batterySaverBelow20Enabled: Boolean = true
+    val batterySaverBelow20Enabled: Boolean = true,
+    val barometerOffsetMeters: Float = 0f,
+    val isCommunityHeatmapEnabled: Boolean = false,
+    val stravaConnected: Boolean = false,
+    val garminConnected: Boolean = false,
+    val autoSyncExternalEnabled: Boolean = false
 )
+
+

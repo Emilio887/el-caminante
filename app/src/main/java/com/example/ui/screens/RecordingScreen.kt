@@ -153,7 +153,8 @@ fun RecordingScreen(
             onToggleHeadingUp = { viewModel.toggleHeadingUp() },
             isFullScreen = isMapFullScreen,
             onToggleFullScreen = { viewModel.toggleMapFullScreen() },
-            isDarkMode = userProfile.isDarkModeEnabled
+            isDarkMode = userProfile.isDarkModeEnabled,
+            isCommunityHeatmapEnabled = userProfile.isCommunityHeatmapEnabled
         )
 
         // Top Bar Controls Overlay (Activities, Keep Screen On, Layer Selector)
@@ -943,6 +944,47 @@ fun RecordingScreen(
                             }
                         }
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { viewModel.toggleCommunityHeatmap() },
+                colors = CardDefaults.cardColors(
+                    containerColor = if (userProfile.isCommunityHeatmapEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = TrailOrange,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Mapa de Calor de la Comunidad",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Text(
+                                text = "Muestra zonas y senderos más frecuentados",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = userProfile.isCommunityHeatmapEnabled,
+                        onCheckedChange = { viewModel.toggleCommunityHeatmap() }
+                    )
                 }
             }
         }

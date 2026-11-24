@@ -142,6 +142,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _currentMapProvider.value = provider
     }
 
+    fun toggleCommunityHeatmap() {
+        val current = _userProfile.value
+        updateUserProfile(current.copy(isCommunityHeatmapEnabled = !current.isCommunityHeatmapEnabled))
+    }
+
+
     fun selectRoute(route: Route?) {
         _selectedRoute.value = route
     }

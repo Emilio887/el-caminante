@@ -90,7 +90,8 @@ fun ComposeMapView(
     onToggleHeadingUp: () -> Unit = {},
     isFullScreen: Boolean = false,
     onToggleFullScreen: (() -> Unit)? = null,
-    isDarkMode: Boolean = false
+    isDarkMode: Boolean = false,
+    isCommunityHeatmapEnabled: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -236,6 +237,49 @@ fun ComposeMapView(
                             style = Stroke(width = 1f)
                         )
                     }
+                }
+            }
+
+            // Draw Community Heatmap (Popular trails heat glow)
+            if (isCommunityHeatmapEnabled) {
+                val heatTrails = listOf(
+                    listOf(
+                        GpsPoint(centerLat - 0.015, centerLon - 0.02),
+                        GpsPoint(centerLat - 0.005, centerLon - 0.01),
+                        GpsPoint(centerLat + 0.005, centerLon - 0.002),
+                        GpsPoint(centerLat + 0.02, centerLon + 0.015)
+                    ),
+                    listOf(
+                        GpsPoint(centerLat - 0.02, centerLon + 0.005),
+                        GpsPoint(centerLat - 0.008, centerLon + 0.012),
+                        GpsPoint(centerLat + 0.012, centerLon + 0.02)
+                    ),
+                    listOf(
+                        GpsPoint(centerLat + 0.01, centerLon - 0.015),
+                        GpsPoint(centerLat + 0.002, centerLon - 0.005),
+                        GpsPoint(centerLat - 0.012, centerLon + 0.008)
+                    )
+                )
+
+                for (trail in heatTrails) {
+                    val heatPath = Path()
+                    val p0 = project(trail[0].latitude, trail[0].longitude)
+                    heatPath.moveTo(p0.x, p0.y)
+                    for (i in 1 until trail.size) {
+                        val pi = project(trail[i].latitude, trail[i].longitude)
+                        heatPath.lineTo(pi.x, pi.y)
+                    }
+
+                    drawPath(
+                        path = heatPath,
+                        color = Color(0xFFFF4500).copy(alpha = 0.35f),
+                        style = Stroke(width = 24f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                    drawPath(
+                        path = heatPath,
+                        color = Color(0xFFFFD700).copy(alpha = 0.85f),
+                        style = Stroke(width = 10f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
                 }
             }
 

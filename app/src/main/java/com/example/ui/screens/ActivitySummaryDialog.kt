@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -21,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +35,9 @@ import androidx.compose.ui.unit.sp
 import com.example.service.TrackingState
 import com.example.ui.components.ChartDataPoint
 import com.example.ui.components.RechartsStyleAreaChart
+import com.example.ui.theme.HeartRateRed
 import com.example.ui.theme.PineGreenPrimary
+import com.example.ui.theme.TrailOrange
 
 @Composable
 fun ActivitySummaryDialog(
@@ -122,6 +126,36 @@ fun ActivitySummaryDialog(
                                 .fillMaxWidth()
                                 .height(160.dp)
                         )
+                    }
+                }
+
+                // Heart Rate Zones & Recovery Advisor Card
+                val hrStats = com.example.service.HeartRateZoneAnalyzer.analyze(state.recordedPoints)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(14.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(androidx.compose.material.icons.Icons.Default.Favorite, contentDescription = null, tint = com.example.ui.theme.HeartRateRed, modifier = Modifier.size(18.dp))
+                            Text("Zonas Cardiacas y Recuperación", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                        Text("Intensidad: ${hrStats.intensityAssessment}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                        Text("Pulso Med: ${hrStats.averageHeartRate} bpm • Máx: ${hrStats.maxHeartRate} bpm", fontSize = 11.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = com.example.ui.theme.TrailOrange.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "⏱️ Tiempo de recuperación recomendado: ${hrStats.recommendedRecoveryHours} horas",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.example.ui.theme.TrailOrange,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
