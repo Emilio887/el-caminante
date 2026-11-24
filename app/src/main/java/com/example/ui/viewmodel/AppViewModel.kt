@@ -66,6 +66,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         emptyList()
     )
 
+    private val _activitySearchQuery = MutableStateFlow("")
+    val activitySearchQuery: StateFlow<String> = _activitySearchQuery.asStateFlow()
+
+    fun setActivitySearchQuery(query: String) {
+        _activitySearchQuery.value = query
+    }
+
+    val filteredActivities: StateFlow<List<ActivityRecord>> = kotlinx.coroutines.flow.combine(
+        activityDao.getAllActivities(),
+        _activitySearchQuery
+    ) { acts, query ->
+        if (query.isBlank()) acts
+        else acts.filter {
+            it.title.contains(query, ignoreCase = true) ||
+            it.notes.contains(query, ignoreCase = true) ||
+            it.activityType.labelEs.contains(query, ignoreCase = true)
+        }
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
+
     val offlineAreas = offlineDao.getAllAreas().stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
@@ -37,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,7 +78,8 @@ fun HistoryScreen(
     val context = LocalContext.current
     BackHandler { onBack() }
 
-    val activities by viewModel.activities.collectAsState()
+    val activities by viewModel.filteredActivities.collectAsState()
+    val searchQuery by viewModel.activitySearchQuery.collectAsState()
     var selectedActivityDetail by remember { mutableStateOf<ActivityRecord?>(null) }
     var activityToDelete by remember { mutableStateOf<ActivityRecord?>(null) }
 
@@ -94,7 +97,7 @@ fun HistoryScreen(
             )
         }
     ) { innerPadding ->
-        if (activities.isEmpty()) {
+        if (activities.isEmpty() && searchQuery.isBlank()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -116,6 +119,21 @@ fun HistoryScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setActivitySearchQuery(it) },
+                        label = { Text("Buscar por nombre, lugar o nota...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp, bottom = 4.dp)
+                            .testTag("input_search_activities"),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
                 items(activities, key = { it.id }) { act ->
                     Card(
                         modifier = Modifier

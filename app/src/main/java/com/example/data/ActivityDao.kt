@@ -14,6 +14,9 @@ interface ActivityDao {
     @Query("SELECT * FROM activities ORDER BY startTime DESC")
     fun getAllActivities(): Flow<List<ActivityRecord>>
 
+    @Query("SELECT * FROM activities WHERE title LIKE '%' || :query || '%' OR notes LIKE '%' || :query || '%' ORDER BY startTime DESC")
+    fun searchActivities(query: String): Flow<List<ActivityRecord>>
+
     @Query("SELECT * FROM activities WHERE id = :id LIMIT 1")
     suspend fun getActivityById(id: String): ActivityRecord?
 
