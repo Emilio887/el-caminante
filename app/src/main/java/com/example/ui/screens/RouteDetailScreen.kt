@@ -38,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -53,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.map.ComposeMapView
 import com.example.model.Route
+import com.example.ui.components.ChartDataPoint
+import com.example.ui.components.RechartsStyleAreaChart
 import com.example.ui.theme.HighContrastGreen
 import com.example.ui.theme.OffTrackRed
 import com.example.ui.theme.PineGreenPrimary
@@ -173,7 +176,7 @@ fun RouteDetailScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Elevation Profile Chart Card
+            // Elevation Profile Chart Card (Recharts-inspired Style)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -186,76 +189,38 @@ fun RouteDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Perfil Altimétrico", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Perfil Altimétrico (Recharts)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Text("Altitud: %.0f m - %.0f m".format(minAlt, maxAlt), fontSize = 12.sp, color = Color.Gray)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Canvas Elevation Profile
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp)
-                            .testTag("elevation_profile_canvas")
-                    ) {
-                        val w = size.width
-                        val h = size.height
-                        val pts = route.points
-
-                        if (pts.size >= 2) {
-                            val altRange = max(10.0, maxAlt - minAlt)
-                            val path = Path()
-                            val fillPath = Path()
-
-                            val p0X = 0f
-                            val p0Y = (h - ((pts[0].altitude - minAlt) / altRange * (h - 20f))).toFloat()
-
-                            path.moveTo(p0X, p0Y)
-                            fillPath.moveTo(p0X, h)
-                            fillPath.lineTo(p0X, p0Y)
-
-                            for (i in 1 until pts.size) {
-                                val x = (i.toFloat() / (pts.size - 1)) * w
-                                val y = (h - ((pts[i].altitude - minAlt) / altRange * (h - 20f))).toFloat()
-                                path.lineTo(x, y)
-                                fillPath.lineTo(x, y)
-                            }
-
-                            fillPath.lineTo(w, h)
-                            fillPath.close()
-
-                            // Draw gradient under elevation
-                            drawPath(
-                                path = fillPath,
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        PineGreenPrimary.copy(alpha = 0.5f),
-                                        PineGreenPrimary.copy(alpha = 0.05f)
+                    val chartPoints = remember(route.points) {
+                        if (route.points.isEmpty()) {
+                            listOf(
+                                ChartDataPoint("Inicio", 0f, 0f),
+                                ChartDataPoint("Fin", route.distanceKm.toFloat(), route.elevationGain.toFloat())
+                            )
+                        } else {
+                            val step = maxOf(1, route.points.size / 6)
+                            route.points.mapIndexedNotNull { index, pt ->
+                                if (index % step == 0 || index == route.points.size - 1) {
+                                    val distFraction = (index.toFloat() / route.points.size) * route.distanceKm
+                                    ChartDataPoint(
+                                        label = "%.1f km".format(distFraction),
+                                        distanceKm = distFraction.toFloat(),
+                                        elevationGainM = pt.altitude.toFloat()
                                     )
-                                )
-                            )
-
-                            // Draw profile line
-                            drawPath(
-                                path = path,
-                                color = PineGreenPrimary,
-                                style = Stroke(width = 4f, cap = StrokeCap.Round)
-                            )
+                                } else null
+                            }
                         }
                     }
 
-                    // Axis labels
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("0 km", fontSize = 11.sp, color = Color.Gray)
-                        Text("%.1f km".format(route.distanceKm / 2), fontSize = 11.sp, color = Color.Gray)
-                        Text("%.1f km".format(route.distanceKm), fontSize = 11.sp, color = Color.Gray)
-                    }
+                    RechartsStyleAreaChart(
+                        data = chartPoints,
+                        isElevation = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 

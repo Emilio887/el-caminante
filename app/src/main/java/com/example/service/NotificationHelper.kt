@@ -71,6 +71,29 @@ object NotificationHelper {
         } catch (_: SecurityException) {}
     }
 
+    private var lastOffTrackNotificationTime = 0L
+
+    fun showOffTrackNotification(context: Context, distanceMeters: Double) {
+        val now = System.currentTimeMillis()
+        if (now - lastOffTrackNotificationTime < 30000L) return
+        lastOffTrackNotificationTime = now
+
+        createNotificationChannel(context)
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle("⚠️ ¡Alerta de Desvío de Ruta!")
+            .setContentText("Te has desviado %.0f metros de la ruta planificada (más de 20m).".format(distanceMeters))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Atención: Te encuentras a %.0f metros de la ruta planificada. Por favor, regresa al track original.".format(distanceMeters)))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        try {
+            manager.notify(9999, builder.build())
+        } catch (_: SecurityException) {}
+    }
+
     // Checks and triggers notifications if newly unlocked
     private val notifiedAchievements = mutableSetOf<String>()
     private var notifiedDist50 = false

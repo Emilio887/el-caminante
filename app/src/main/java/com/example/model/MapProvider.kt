@@ -47,6 +47,13 @@ enum class MapProvider(
         urlPattern = "https://www.ign.es/wmts/mapa-raster?layer=MTN&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}",
         maxZoom = 17,
         isTopographic = true
+    ),
+    GOOGLE_MAPS(
+        id = "google_maps",
+        displayName = "Google Maps Compose",
+        description = "Mapa vectorial oficial de Google Maps con polilineas y ubicación",
+        urlPattern = "",
+        maxZoom = 20
     );
 
     fun buildTileUrl(zoom: Int, x: Int, y: Int): String {

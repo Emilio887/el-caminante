@@ -3,14 +3,18 @@ package com.example.map
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,6 +68,15 @@ import com.example.model.Route
 import com.example.ui.theme.HighContrastGreen
 import com.example.ui.theme.OffTrackRed
 import com.example.ui.theme.TrailOrange
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -93,6 +106,131 @@ fun ComposeMapView(
     isDarkMode: Boolean = false,
     isCommunityHeatmapEnabled: Boolean = false
 ) {
+    if (mapProvider == MapProvider.GOOGLE_MAPS) {
+        val initialLat = currentLocation?.latitude ?: referenceRoute?.points?.firstOrNull()?.latitude ?: 40.7512
+        val initialLon = currentLocation?.longitude ?: referenceRoute?.points?.firstOrNull()?.longitude ?: -4.0125
+        val zoomLevel = 15f
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(LatLng(initialLat, initialLon), zoomLevel)
+        }
+
+        var userInteracting by remember { mutableStateOf(false) }
+
+        LaunchedEffect(currentLocation) {
+            currentLocation?.let {
+                if (!userInteracting) {
+                    cameraPositionState.animate(
+                        com.google.android.gms.maps.CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude)),
+                        500
+                    )
+                }
+            }
+        }
+
+        Box(modifier = modifier.fillMaxSize().testTag("google_maps_compose_view")) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                properties = MapProperties(isMyLocationEnabled = false),
+                uiSettings = MapUiSettings(zoomControlsEnabled = true, compassEnabled = true)
+            ) {
+                // Reference Route Polyline
+                referenceRoute?.points?.let { pts ->
+                    if (pts.size >= 2) {
+                        val latLngs = pts.map { LatLng(it.latitude, it.longitude) }
+                        Polyline(
+                            points = latLngs,
+                            color = TrailOrange,
+                            width = 14f
+                        )
+                    }
+                }
+
+                // Recorded Track Polyline
+                if (recordedPoints.size >= 2) {
+                    val latLngs = recordedPoints.map { LatLng(it.latitude, it.longitude) }
+                    Polyline(
+                        points = latLngs,
+                        color = HighContrastGreen,
+                        width = 16f
+                    )
+                }
+
+                // Current Location Marker
+                currentLocation?.let { loc ->
+                    Marker(
+                        state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
+                        title = "Mi Ubicación Actual",
+                        snippet = "Velocidad: %.1f km/h".format(loc.speedKmh)
+                    )
+                }
+
+                // Group Members Markers
+                for (member in groupMembers) {
+                    Marker(
+                        state = MarkerState(position = LatLng(member.latitude, member.longitude)),
+                        title = member.nickname,
+                        snippet = "%.1f km/h • Batería %d%%".format(member.speedKmh, member.batteryLevel)
+                    )
+                }
+            }
+
+            // Top-right controls overlay (Fullscreen)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 70.dp, end = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (onToggleFullScreen != null) {
+                    Surface(
+                        modifier = Modifier
+                            .clickable { onToggleFullScreen() }
+                            .testTag("btn_map_fullscreen"),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Box(modifier = Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                contentDescription = "Pantalla completa",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Off-track alert banner overlay
+            if (isOffTrack) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 70.dp, start = 16.dp, end = 16.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = OffTrackRed,
+                    shadowElevation = 6.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "¡Fuera de ruta! Desvío de %.0f m".format(offTrackDistanceMeters),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+        return
+    }
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 

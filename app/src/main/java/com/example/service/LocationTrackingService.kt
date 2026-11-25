@@ -169,7 +169,7 @@ class LocationTrackingService : Service() {
             accuracy = if (loc.hasAccuracy()) loc.accuracy else 5f,
             bearing = if (loc.hasBearing()) loc.bearing else 0f
         )
-        TrackingManager.onLocationUpdate(point)
+        TrackingManager.onLocationUpdate(point, this)
     }
 
     private fun stopForegroundTracking() {

@@ -140,7 +140,7 @@ object TrackingManager {
         }
     }
 
-    fun onLocationUpdate(rawPoint: GpsPoint) {
+    fun onLocationUpdate(rawPoint: GpsPoint, context: Context? = null) {
         val currentPoint = rawPoint.copy(
             heartRate = _state.value.currentHeartRate,
             cadence = _state.value.currentCadence,
@@ -172,13 +172,16 @@ object TrackingManager {
                 }
             }
 
-            // Check off-track alert if reference route is active
+            // Check off-track alert if reference route is active (Geofence threshold > 20 meters)
             var isOff = false
             var offDist = 0.0
             curr.activeReferenceRoute?.let { ref ->
                 if (ref.points.isNotEmpty()) {
                     offDist = OffTrackCalculator.getDistanceToRoute(currentPoint, ref.points)
-                    isOff = offDist > curr.offTrackWarningThresholdMeters
+                    isOff = offDist > 20.0 // 20 meters geofence threshold
+                    if (isOff && context != null && curr.status == RecordingStatus.RECORDING) {
+                        NotificationHelper.showOffTrackNotification(context, offDist)
+                    }
                 }
             }
 
